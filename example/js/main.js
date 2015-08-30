@@ -1,5 +1,5 @@
 (function($) {
 	'use strict';
 
-	// some code
+	$('.content .row').ufiScroll();
 }(jQuery));

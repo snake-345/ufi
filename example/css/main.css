@@ -35,4 +35,9 @@ header {
     font-weight: bold;
     font-size: 18px; }
 
+.preloader {
+  font-size: 18px;
+  text-align: center;
+  font-weight: bold; }
+
 /*# sourceMappingURL=../css/main.css.map */
