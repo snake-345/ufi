@@ -22,9 +22,9 @@
 					<p><a href="#" class="btn btn-default">Button 3</a></p>
 				</div>
 			</div>
-			<?php usleep(0.3 * 1000 * 1000); ?>
+<!--			--><?php //usleep(0.3 * 1000 * 1000); ?>
 			<div class="col-xs-12 col-sm-9 content">
-				<div class="row items" data-page-count="10">
+				<div class="row items" data-page-count="20">
 					<?php for ($i = 0; $i < 21; $i++): ?>
 					<div class="col-xs-12 col-sm-4 item">
 						<div class="image">

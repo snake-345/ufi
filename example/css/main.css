@@ -40,4 +40,22 @@ header {
   text-align: center;
   font-weight: bold; }
 
+.ufi-pagination {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #F0F0F0;
+  text-align: center;
+  padding: 10px 0; }
+  .ufi-pagination_page, .ufi-pagination_separator {
+    display: inline-block;
+    vertical-align: top;
+    padding: 5px 10px;
+    border: 1px solid #cccccc;
+    margin-right: -1px; }
+    .ufi-pagination_page._active, .ufi-pagination_separator._active {
+      background: #cccccc; }
+
 /*# sourceMappingURL=../css/main.css.map */

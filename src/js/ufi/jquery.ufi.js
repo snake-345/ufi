@@ -18,6 +18,33 @@
 		selectors: {
 			itemFirst: '.ufi-item-first',
 			itemLast: '.ufi-item-last'
+		},
+		pagination: function(current) {
+			var $pagination = $('<div class="ufi-pagination"/>');
+			var $page = $('<a href="#" class="ufi-pagination_page"/>');
+			var $separator = $('<span class="ufi-pagination_separator">...</span>');
+			var paginationRaw = this.generatePagination(current, this.options.pageCount, 3, 1, 1);
+			var $tempEl;
+
+			for (var i = 0; i < paginationRaw.length; i++) {
+				if (typeof paginationRaw[i] !== 'string') {
+					$tempEl = $page.clone();
+					$tempEl.text(paginationRaw[i]);
+					if (paginationRaw[i].isActive) {
+						$tempEl.addClass('_active');
+					}
+				} else {
+					$tempEl = $separator.clone();
+				}
+
+				$pagination.append($tempEl);
+			}
+
+			if ($('body').find('.ufi-pagination').length) {
+				$('body').find('.ufi-pagination').replaceWith($pagination);
+			} else {
+				$('body').append($pagination);
+			}
 		}
 	};
 
@@ -33,8 +60,6 @@
 		this.lastLoadedPage = this.currentPage;
 		this.isLoading = false;
 
-		console.log(this.options.pageCount);
-
 		this.init();
 	}
 
@@ -42,6 +67,7 @@
 		init: function() {
 			this._pageItemsEnhancment(this.$element, this.currentPage);
 			this._scrollInit();
+			this.options.pagination.call(this, this.currentPage);
 		},
 
 		_scrollInit: function() {
@@ -83,6 +109,7 @@
 						self.lastLoadedPage = page;
 						self._hidePreloader();
 						self.isLoading = false;
+						self.options.pagination.call(self, self.currentPage);
 					}
 				})
 			}
@@ -162,6 +189,88 @@
 					return func.apply(self, args);
 				}
 			};
+		},
+
+		generatePagination: function(currentPage, countPages, pages, firstPages, lastPages) {
+			firstPages = firstPages || 0;
+			lastPages = lastPages || 0;
+			var ranges = [];
+			var result = [];
+			var firstHidedPages = firstPages ? 2 : 0;
+			var lastHidedPages = lastPages ? 2 : 0;
+			var minimumPages = pages + firstPages + lastPages + firstHidedPages / 2 + lastHidedPages / 2;
+			var beforeCurrentPage = Math.ceil((pages - 1) / 2);
+			var afterCurrentPage = pages - 1 - beforeCurrentPage;
+			var isFirstEnhancment = false;
+			var isLastEnhancment = false;
+			var number, i;
+
+			if (countPages <= minimumPages) {
+				ranges.push({
+					from: 1,
+					to: countPages
+				});
+			} else {
+				isFirstEnhancment = currentPage <= firstPages + firstHidedPages + beforeCurrentPage;
+				isLastEnhancment = currentPage + afterCurrentPage + lastPages + lastHidedPages > countPages;
+
+				if (isFirstEnhancment) {
+					ranges.push({
+						from: 1,
+						to: firstPages + firstHidedPages + beforeCurrentPage + afterCurrentPage
+					});
+				} else {
+					ranges.push({
+						from: 1,
+						to: firstPages
+					});
+					if (firstHidedPages) {
+						ranges.push('...');
+					}
+					if (!isLastEnhancment) {
+						ranges.push({
+							from: currentPage - beforeCurrentPage,
+							to: currentPage
+						});
+					}
+				}
+
+				if (isLastEnhancment) {
+					ranges.push({
+						from: countPages + 1 - afterCurrentPage - beforeCurrentPage - lastPages - lastHidedPages,
+						to: countPages
+					});
+				} else {
+					if (!isFirstEnhancment) {
+						ranges.push({
+							from: currentPage + 1,
+							to: currentPage + afterCurrentPage
+						});
+					}
+					if (lastHidedPages) {
+						ranges.push('...');
+					}
+					ranges.push({
+						from: countPages - lastPages + 1,
+						to: countPages
+					});
+				}
+			}
+
+			for (i = 0; i < ranges.length; i++) {
+				if (ranges[i].from) { // кря
+					for (var j = ranges[i].from; j <= ranges[i].to; j++) {
+						number = new Number(j);
+						if (j === currentPage) {
+							number.isActive = true;
+						}
+						result.push(number);
+					}
+				} else {
+					result.push(ranges[i]);
+				}
+			}
+			return result;
 		}
 	};
 
