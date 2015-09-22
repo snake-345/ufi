@@ -1,5 +1,14 @@
+.test {
+  position: absolute;
+  top: 0%;
+  height: 1px;
+  width: 100%;
+  background: red;
+  z-index: 10000; }
+
 body {
-  font-size: 14px; }
+  font-size: 14px;
+  padding-bottom: 60px; }
 
 header {
   background: #F7F7F7;
@@ -57,5 +66,20 @@ header {
     margin-right: -1px; }
     .ufi-pagination_page._active, .ufi-pagination_separator._active {
       background: #cccccc; }
+
+.placeholder-item {
+  padding-bottom: 75%;
+  position: relative;
+  background: #71ffbd; }
+  .placeholder-item_inner {
+    position: absolute;
+    top: 50%;
+    font-size: 60px;
+    line-height: 60px;
+    margin-top: -30px;
+    font-weight: bold;
+    text-align: center;
+    left: 0;
+    right: 0; }
 
 /*# sourceMappingURL=../css/main.css.map */

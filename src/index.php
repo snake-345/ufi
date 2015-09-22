@@ -8,6 +8,7 @@
 	<link rel="stylesheet" href="css/main.css"/>
 </head>
 <body>
+	<div class="test"></div>
 	<div class="container">
 		<header>
 			<h1>User Friendly Infinity scroll(UFI)</h1>
@@ -25,13 +26,21 @@
 <!--			--><?php //usleep(0.3 * 1000 * 1000); ?>
 			<div class="col-xs-12 col-sm-9 content">
 				<div class="row items" data-page-count="20">
-					<?php for ($i = 0; $i < 21; $i++): ?>
+					<?php for ($i = 0; $i < 9; $i++): ?>
 					<div class="col-xs-12 col-sm-4 item">
+						<div class="placeholder-item">
+							<div class="placeholder-item_inner">
+								<?= isset($_GET['page']) ? $_GET['page'] : 1 ?>
+							</div>
+						</div>
+						<? /*
 						<div class="image">
 							<img src="images/item.jpg" class="img-responsive">
 						</div>
+						<h1><?= isset($_GET['page']) ? $_GET['page'] : 1 ?></h1>
 						<h4 class="title"><a href="#">Honda NT750 Deauville</a></h4>
 						<div class="price">10 000$</div>
+ 						*/ ?>
 					</div>
 					<?php endfor; ?>
 				</div>

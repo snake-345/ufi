@@ -59,6 +59,7 @@
 		this.currentPage = window.location.search.match(pageRegExp) ? window.location.search.match(pageRegExp) : 1;
 		this.lastLoadedPage = this.currentPage;
 		this.isLoading = false;
+		this.pages = [];
 
 		this.init();
 	}
@@ -66,26 +67,57 @@
 	Ufi.prototype = {
 		init: function() {
 			this._pageItemsEnhancment(this.$element, this.currentPage);
+			this.pages[this.lastLoadedPage] = this._getPagePosition(this.lastLoadedPage);
 			this._scrollInit();
 			this.options.pagination.call(this, this.currentPage);
 		},
 
 		_scrollInit: function() {
 			var _scrollHandler = this._delayFunctionCall(1, 50, this._scrollHandler);
+
+			/***********************
+			 * Временное решение
+			 ***********************/
+			// TODO: дописать подгрузку нужного количества страниц
+			var self = this;
+			this._loadPage(2);
+
+			setTimeout(function() {
+				self._loadPage(3);
+			}, 300);
+			setTimeout(function() {
+				self._loadPage(4);
+			}, 600);
+			setTimeout(function() {
+				self._loadPage(5);
+			}, 900);
+			/***********************
+			 * Временное решение
+			 ***********************/
+
 			$(window).on('scroll.ufi', function() {
 				_scrollHandler();
 			});
 		},
 
 		_scrollHandler: function() {
-			if (this.lastLoadedPage < this.options.pageCount) {
-				var scrollBottom = $(window).scrollTop() + $(window).height();
-				var lastLoadedPagePosition = this._getPagePosition(this.lastLoadedPage);
-				var prediction = (lastLoadedPagePosition.bottom - lastLoadedPagePosition.top) * 0.25;
+			var scrollTop = $(window).scrollTop();
+			var winHeight = $(window).height();
+			var scrollBottom = scrollTop + winHeight;
+			var lastLoadedPagePosition = this.pages[this.lastLoadedPage];
+			var prediction = (lastLoadedPagePosition.bottom - lastLoadedPagePosition.top) * 0.25;
 
-				if ( scrollBottom >= lastLoadedPagePosition.bottom - prediction) {
-					this._loadPage(this.currentPage + 1);
+			scrollTop = this._improveScrollTop(scrollTop);
+
+			if (this.lastLoadedPage < this.options.pageCount) {
+				if (scrollBottom >= lastLoadedPagePosition.bottom - prediction) {
+					this._loadPage(this.lastLoadedPage + 1);
 				}
+			}
+
+			if (this.currentPage !== this._getVisiblePage(scrollTop)) {
+				this.currentPage = this._getVisiblePage(scrollTop);
+				this.options.pagination.call(this, this.currentPage);
 			}
 		},
 
@@ -107,9 +139,11 @@
 						self.currentPage = page;
 						self.$element.append($content.find('.item'));
 						self.lastLoadedPage = page;
+						setTimeout(function() {
+							self.pages[page] = self._getPagePosition(page);
+						}, 0);
 						self._hidePreloader();
 						self.isLoading = false;
-						self.options.pagination.call(self, self.currentPage);
 					}
 				})
 			}
@@ -121,6 +155,43 @@
 
 		_hidePreloader: function() {
 			this.$preloader.remove();
+		},
+
+		_improveScrollTop: function(scrollTop) {
+			// Последние страницы, могут быть слишком маленькими по высоте и тогда их верхняя граница
+			// никогда не пересекёт scrollTop, таким образом нет возможности определить,
+			// что они уже видимы и соответсвующе перестроить пагинацию.
+			// Тоесть у пагинации не будет возможности определить последнии страницы и они никогда не станут активными.
+			// Для борьбы с этой проблемой в данной функции реализовано следующее решение:
+			//   - Получаем номер последней страницы верхняя граница которой меньше максимального scrollTop
+			//   - расчитываем сколько мы ещё можем прокуртить после этой страницы
+			//   - если прокрутить можно меньше чем 300 пикселей, двигаем верхнюю границу найденной страницы так, чтобы после
+			//     определения, что это активная страница, можно было прокрутить ещё 300 пикселей
+			//   - увеличиваем scrollTop относительно прокрученного остатка
+			//   - таким образом добиваемся что мнимый scrollTop пересекет верхние границы всех страниц
+			if (this.lastLoadedPage === this.options.pageCount) { // Если последняя страница загружена
+				var lastPageFit = this._getLastPageFit();                       // последняя страница top которой меньше максимального scrollTop
+				if (lastPageFit === this.options.pageCount) return scrollTop;   // если это самая последняя страница, то модифицировать scrollTop нет необходимости
+				var lastPageFitTop = this.pages[lastPageFit].top;
+				var docHeight = document.documentElement.scrollHeight;
+				var winHeight = document.documentElement.clientHeight;
+				var remainder = docHeight - (lastPageFitTop + winHeight); // сколько ещё будет возможно прокрутить после верхней границы lastPageFit
+
+				// Когда остаток слишком мал, последние страницы слишком быстро переключаются, поэтому
+				if (remainder < 300) {                      // если остаток меньше 300, то
+					lastPageFitTop -= 300 - remainder;      // двигаем верхнюю границу последней вмещающейся страницы на разницу между 300 и текущим остатком
+					remainder = 300;                        // устанавливаем значение остатка в 300;
+				}
+
+				// увеличиваем scrollTop относительно того, сколько из пощитанного нами остатка уже прокрутили
+				var modificator = winHeight * ((scrollTop - lastPageFitTop) / remainder);
+
+				if (scrollTop > lastPageFitTop) {
+					scrollTop += modificator;
+				}
+			}
+
+			return scrollTop;
 		},
 
 		_calculatePageHeight: function(page) {
@@ -138,8 +209,24 @@
 			}
 		},
 
-		_getVisiblePage: function() {
+		_getLastPageFit: function() {
+			for (var i = this.pages.length - 1; i > 0; i--) {
+				if (document.documentElement.scrollHeight - this.pages[i].top > document.documentElement.clientHeight) {
+					break;
+				}
+			}
 
+			return i;
+		},
+
+		_getVisiblePage: function(scrollTop) {
+			for (var i = this.pages.length - 1; i > 0; i--) {
+				if (scrollTop >= this.pages[i].top && scrollTop <= this.pages[i].bottom) {
+					return i;
+				}
+			}
+
+			return this.currentPage;
 		},
 
 		_getFirstItemOnPage: function(page) {
@@ -192,6 +279,7 @@
 		},
 
 		generatePagination: function(currentPage, countPages, pages, firstPages, lastPages) {
+			pages = pages || 1;
 			firstPages = firstPages || 0;
 			lastPages = lastPages || 0;
 			var ranges = [];
@@ -217,7 +305,7 @@
 				if (isFirstEnhancment) {
 					ranges.push({
 						from: 1,
-						to: firstPages + firstHidedPages + beforeCurrentPage + afterCurrentPage
+						to: Math.max(firstPages, 1) + firstHidedPages + beforeCurrentPage + afterCurrentPage
 					});
 				} else {
 					ranges.push({
@@ -237,7 +325,7 @@
 
 				if (isLastEnhancment) {
 					ranges.push({
-						from: countPages + 1 - afterCurrentPage - beforeCurrentPage - lastPages - lastHidedPages,
+						from: countPages + 1 - afterCurrentPage - beforeCurrentPage - Math.max(lastPages, 1) - lastHidedPages,
 						to: countPages
 					});
 				} else {
