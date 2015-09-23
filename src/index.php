@@ -26,7 +26,7 @@
 <!--			--><?php //usleep(0.3 * 1000 * 1000); ?>
 			<div class="col-xs-12 col-sm-9 content">
 				<div class="row items" data-page-count="20">
-					<?php for ($i = 0; $i < 9; $i++): ?>
+					<?php for ($i = 0; $i < 6; $i++): ?>
 					<div class="col-xs-12 col-sm-4 item">
 						<div class="placeholder-item">
 							<div class="placeholder-item_inner">

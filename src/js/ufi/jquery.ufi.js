@@ -59,7 +59,7 @@
 		this.currentPage = window.location.search.match(pageRegExp) ? window.location.search.match(pageRegExp) : 1;
 		this.lastLoadedPage = this.currentPage;
 		this.isLoading = false;
-		this.pages = [];
+		this.pagesPositions = [];
 
 		this.init();
 	}
@@ -67,7 +67,7 @@
 	Ufi.prototype = {
 		init: function() {
 			this._pageItemsEnhancment(this.$element, this.currentPage);
-			this.pages[this.lastLoadedPage] = this._getPagePosition(this.lastLoadedPage);
+			this._getPagePosition(this.lastLoadedPage);
 			this._scrollInit();
 			this.options.pagination.call(this, this.currentPage);
 		},
@@ -104,7 +104,7 @@
 			var scrollTop = $(window).scrollTop();
 			var winHeight = $(window).height();
 			var scrollBottom = scrollTop + winHeight;
-			var lastLoadedPagePosition = this.pages[this.lastLoadedPage];
+			var lastLoadedPagePosition = this._getPagePosition(this.lastLoadedPage);
 			var prediction = (lastLoadedPagePosition.bottom - lastLoadedPagePosition.top) * 0.25;
 
 			scrollTop = this._improveScrollTop(scrollTop);
@@ -140,7 +140,7 @@
 						self.$element.append($content.find('.item'));
 						self.lastLoadedPage = page;
 						setTimeout(function() {
-							self.pages[page] = self._getPagePosition(page);
+							self._getPagePosition(page);
 						}, 0);
 						self._hidePreloader();
 						self.isLoading = false;
@@ -172,7 +172,7 @@
 			if (this.lastLoadedPage === this.options.pageCount) { // Если последняя страница загружена
 				var lastPageFit = this._getLastPageFit();                       // последняя страница top которой меньше максимального scrollTop
 				if (lastPageFit === this.options.pageCount) return scrollTop;   // если это самая последняя страница, то модифицировать scrollTop нет необходимости
-				var lastPageFitTop = this.pages[lastPageFit].top;
+				var lastPageFitTop = this._getPagePosition(lastPageFit).top;
 				var docHeight = document.documentElement.scrollHeight;
 				var winHeight = document.documentElement.clientHeight;
 				var remainder = docHeight - (lastPageFitTop + winHeight); // сколько ещё будет возможно прокрутить после верхней границы lastPageFit
@@ -201,17 +201,20 @@
 		},
 
 		_getPagePosition: function(page) {
+			if (this.pagesPositions[page]) return this.pagesPositions[page];
 			var $itemLast = this._getLastItemOnPage(page);
 
-			return {
+			this.pagesPositions[page] = {
 				top: this._getFirstItemOnPage(page).offset().top,
 				bottom: $itemLast.offset().top + $itemLast.outerHeight()
-			}
+			};
+
+			return this.pagesPositions[page];
 		},
 
 		_getLastPageFit: function() {
-			for (var i = this.pages.length - 1; i > 0; i--) {
-				if (document.documentElement.scrollHeight - this.pages[i].top > document.documentElement.clientHeight) {
+			for (var i = this.pagesPositions.length - 1; i > 0; i--) {
+				if (document.documentElement.scrollHeight - this._getPagePosition(i).top > document.documentElement.clientHeight) {
 					break;
 				}
 			}
@@ -220,8 +223,9 @@
 		},
 
 		_getVisiblePage: function(scrollTop) {
-			for (var i = this.pages.length - 1; i > 0; i--) {
-				if (scrollTop >= this.pages[i].top && scrollTop <= this.pages[i].bottom) {
+			for (var i = this.pagesPositions.length - 1; i > 0; i--) {
+				var pagePosition = this._getPagePosition(i);
+				if (scrollTop >= pagePosition.top && scrollTop <= pagePosition.bottom) {
 					return i;
 				}
 			}
