@@ -44,6 +44,9 @@
 					</div>
 					<?php endfor; ?>
 				</div>
+				<div class="ufi-pagination">
+
+				</div>
 			</div>
 		</div>
 	</div>

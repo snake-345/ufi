@@ -10,14 +10,15 @@
 	var pluginName = 'ufiScroll';
 	var	defaults = {
 		url: window.location.pathname +
-			 window.location.search +
+			 window.location.search.replace(/&?page=\d+/gi, '') +
 			 (window.location.search ? '&page={number}' : '?page={number}') +
 			 window.location.hash,
 		pageCount: null,
 		preloader: '<div class="preloader">Loading...</div>',
 		selectors: {
 			itemFirst: '.ufi-item-first',
-			itemLast: '.ufi-item-last'
+			itemLast: '.ufi-item-last',
+			items: '> *'
 		},
 		pagination: function(current) {
 			var $pagination = $('<div class="ufi-pagination"/>');
@@ -52,7 +53,7 @@
 		var pageRegExp;
 		var data = $element.data();
 		this.$element = $element;
-		this.options = $.extend({}, defaults, data, options);
+		this.options = $.extend(true, {}, defaults, data, options);
 		this.$preloader = $(this.options.preloader);
 
 		pageRegExp = new RegExp(this.options.url.replace('{number}', '(\\d+)'), 'i');
@@ -60,6 +61,7 @@
 		this.lastLoadedPage = this.currentPage;
 		this.isLoading = false;
 		this.pagesPositions = [];
+		this.history = window.history && window.history.pushState ? window.history : false;
 
 		this.init();
 	}
@@ -117,7 +119,14 @@
 
 			if (this.currentPage !== this._getVisiblePage(scrollTop)) {
 				this.currentPage = this._getVisiblePage(scrollTop);
+				this._pushState(this.currentPage);
 				this.options.pagination.call(this, this.currentPage);
+			}
+		},
+
+		_pushState: function(page) {
+			if (this.history) {
+				this.history.pushState(null, null, this.options.url.replace('{number}', page));
 			}
 		},
 
@@ -242,10 +251,10 @@
 		},
 
 		_pageItemsEnhancment: function($element, page) {
-			$element.find('> *:first')
+			$element.find(this.options.selectors.items + ':first')
 				.addClass(this.options.selectors.itemFirst.slice(1))
 				.attr('data-page', page);
-			$element.find('> *:last')
+			$element.find(this.options.selectors.items + ':last')
 				.addClass(this.options.selectors.itemLast.slice(1))
 				.attr('data-page', page);
 		},
@@ -369,8 +378,8 @@
 	$.fn[pluginName] = function ( options ) {
 		var $element = this.first();
 		$element.selector = this.selector + ':first';
-		if (!$.data($element, pluginName)) {
-			$.data($element, pluginName,
+		if (!$element.data(pluginName)) {
+			$element.data(pluginName,
 				new Ufi($element, options));
 		}
 		return this;
