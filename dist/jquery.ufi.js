@@ -77,25 +77,7 @@
 		_scrollInit: function() {
 			var _scrollHandler = this._delayFunctionCall(1, 50, this._scrollHandler);
 
-			/***********************
-			 * Временное решение
-			 ***********************/
-			// TODO: дописать подгрузку нужного количества страниц
-			var self = this;
-			this._loadPage(2);
-
-			setTimeout(function() {
-				self._loadPage(3);
-			}, 300);
-			setTimeout(function() {
-				self._loadPage(4);
-			}, 600);
-			setTimeout(function() {
-				self._loadPage(5);
-			}, 900);
-			/***********************
-			 * Временное решение
-			 ***********************/
+			this._preloadPages();
 
 			$(window).on('scroll.ufi', function() {
 				_scrollHandler();
@@ -103,22 +85,17 @@
 		},
 
 		_scrollHandler: function() {
-			var scrollTop = $(window).scrollTop();
-			var winHeight = $(window).height();
-			var scrollBottom = scrollTop + winHeight;
+			var scroll = this._calculateScroll();
 			var lastLoadedPagePosition = this._getPagePosition(this.lastLoadedPage);
-			var prediction = (lastLoadedPagePosition.bottom - lastLoadedPagePosition.top) * 0.25;
+			var prediction = this._calculatePageHeight(this.lastLoadedPage) * 0.25;
 
-			scrollTop = this._improveScrollTop(scrollTop);
-
-			if (this.lastLoadedPage < this.options.pageCount) {
-				if (scrollBottom >= lastLoadedPagePosition.bottom - prediction) {
-					this._loadPage(this.lastLoadedPage + 1);
-				}
+			if (this.lastLoadedPage < this.options.pageCount &&
+				scroll.bottom >= lastLoadedPagePosition.bottom - prediction) {
+				this._loadPage(this.lastLoadedPage + 1);
 			}
 
-			if (this.currentPage !== this._getVisiblePage(scrollTop)) {
-				this.currentPage = this._getVisiblePage(scrollTop);
+			if (this.currentPage !== this._getVisiblePage(scroll.top)) {
+				this.currentPage = this._getVisiblePage(scroll.top);
 				this._pushState(this.currentPage);
 				this.options.pagination.call(this, this.currentPage);
 			}
@@ -130,8 +107,19 @@
 			}
 		},
 
-		_loadPage: function(page) {
+		_preloadPages: function() {
 			var self = this;
+			if (this.lastLoadedPage < this.options.pageCount &&
+				$(window).height() >= this._getPagePosition(this.lastLoadedPage).bottom) {
+				this._loadPage(this.lastLoadedPage + 1, function() {
+					self._preloadPages();
+				});
+			}
+		},
+
+		_loadPage: function(page, callback) {
+			var self = this;
+			callback = typeof callback === 'function' ? callback : function() {};
 			if (!this.isLoading) {
 				this.isLoading = true;
 				this._showPreloader();
@@ -153,6 +141,7 @@
 						}, 0);
 						self._hidePreloader();
 						self.isLoading = false;
+						callback();
 					}
 				})
 			}
@@ -164,6 +153,15 @@
 
 		_hidePreloader: function() {
 			this.$preloader.remove();
+		},
+
+		_calculateScroll: function() {
+			var scrollTop = $(window).scrollTop();
+
+			return {
+				top: this._improveScrollTop(scrollTop),
+				bottom: $(window).height() + scrollTop
+			}
 		},
 
 		_improveScrollTop: function(scrollTop) {

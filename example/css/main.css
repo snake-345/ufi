@@ -64,7 +64,8 @@ header {
     vertical-align: top;
     padding: 5px 10px;
     border: 1px solid #cccccc;
-    margin-right: -1px; }
+    margin-right: -1px;
+    width: 38px; }
     .ufi-pagination_page._active,
     .ufi-pagination_separator._active {
       background: #cccccc; }
