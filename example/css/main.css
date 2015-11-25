@@ -58,16 +58,14 @@ header {
   border-top: 1px solid #F0F0F0;
   text-align: center;
   padding: 10px 0; }
-  .ufi-pagination_page,
-  .ufi-pagination_separator {
+  .ufi-pagination_page, .ufi-pagination_separator {
     display: inline-block;
     vertical-align: top;
     padding: 5px 10px;
     border: 1px solid #cccccc;
     margin-right: -1px;
     width: 38px; }
-    .ufi-pagination_page._active,
-    .ufi-pagination_separator._active {
+    .ufi-pagination_page._active, .ufi-pagination_separator._active {
       background: #cccccc; }
 
 .placeholder-item {

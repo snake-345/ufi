@@ -232,7 +232,7 @@
 		_getVisiblePage: function(scrollTop) {
 			for (var i = this.pagesPositions.length - 1; i > 0; i--) {
 				var pagePosition = this._getPagePosition(i);
-				if (scrollTop >= pagePosition.top && scrollTop <= pagePosition.bottom) {
+				if (scrollTop >= pagePosition.top && scrollTop <= pagePosition.bottom || i === this.options.pageCount && scrollTop >= pagePosition.top) {
 					return i;
 				}
 			}
