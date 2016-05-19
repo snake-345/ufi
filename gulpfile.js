@@ -7,7 +7,6 @@ var gulp = require('gulp'),
 $.browserSync = require('browser-sync');
 $.pngquant = require('imagemin-pngquant');
 
-	
 var path = {
 	build: {
 		html:  'example/',
